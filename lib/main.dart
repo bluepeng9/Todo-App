@@ -144,14 +144,16 @@ class _MyHomePageState extends State<MyHomePage> {
                         onLongPress: () async {
                           getTodayTodo();
                         },
-                        onTap: () {
+                        onTap: () async{
                           setState(() {
                             if (t.done == 0) {
                               t.done = 1;
                             } else {
                               t.done = 0;
                             }
-                          });
+                          }
+                          );
+                          await dbHelper.insertTodo(t);
                         },
                       );
                     })));
@@ -179,7 +181,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 builder: (context) => TodoWritePage(todo: t)));
                         setState(() {});
                       },
-                      onTap: () {
+                      onTap: () async{
                         setState(() {
                           if (t.done == 0) {
                             t.done = 1;
@@ -187,6 +189,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             t.done = 0;
                           }
                         });
+                        await dbHelper.insertTodo(t);
                       },
                     );
                   }),
