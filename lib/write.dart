@@ -30,7 +30,7 @@ class _TodoWritePageState extends State<TodoWritePage> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget getMain(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
           actions: [

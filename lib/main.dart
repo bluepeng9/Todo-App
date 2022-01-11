@@ -90,22 +90,28 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {});
   }
 
+  void getAllTodo() async {
+    allTodo = await dbHelper.getAllTodo();
+    setState(() {});
+  }
+
   @override
   void initState() {
     getTodayTodo();
     super.initState();
   }
 
-
+  Widget getPage(){
+    if(_idx==0){
+      return getMain();
+    }
+    else {
+      return getHistory();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: PreferredSize(
         child: AppBar(
@@ -201,9 +207,9 @@ class _MyHomePageState extends State<MyHomePage> {
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
       ),
+
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          print("");
           Todo todo = await Navigator.of(context).push(MaterialPageRoute(
               builder: (context) => TodoWritePage(
                   todo: Todo(
@@ -227,11 +233,23 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
         onTap: (index) {
           setState(() {
+            if (_idx==1){
+              getAllTodo();
+            }
             _idx = index;
           });
         },
         currentIndex: _idx,
       ),
+    );
+  }
+  List<Todo> allTodo = [];
+  Widget getHistory(){
+    return ListView.builder(
+      itemCount: allTodo.length,
+      itemBuilder: (context, index) {
+        return TodoCardWidget(t: allTodo[index]);
+      },
     );
   }
 }
