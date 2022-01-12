@@ -48,7 +48,6 @@ class DataBaseHelper {
     if (db == null) {
       return 1;
     }
-    print(todo.id);
     if (todo.id == null) {
       Map<String, dynamic> row = {
         "title": todo.title,
@@ -97,7 +96,6 @@ class DataBaseHelper {
     Database? db = await instance.database;
     List<Todo> todos = [];
     if (db == null) {
-      print("널이냐");
       return [];
     }
     var queries =

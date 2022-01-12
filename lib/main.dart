@@ -6,14 +6,6 @@ import 'data/todo.dart';
 import 'data/util.dart';
 
 void main() {
-  double bmi = 27.1;
-  if (bmi > 30) {
-    print("비만");
-  } else if (bmi > 25) {
-    print("ㅇㅇdd");
-  } else {
-    print("아");
-  }
   runApp(const MyApp());
 }
 
@@ -26,15 +18,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
         primarySwatch: Colors.blue,
       ),
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
@@ -45,15 +28,6 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key, required this.title}) : super(key: key);
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
   final String title;
 
   @override
@@ -62,7 +36,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
-  int _idx = 0;
+  int selectIndex = 0;
 
   final dbHelper = DataBaseHelper.instance;
 
@@ -101,15 +75,6 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
   }
 
-  Widget getPage(){
-    if(_idx==0){
-      return getMain();
-    }
-    else {
-      return getHistory();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -122,7 +87,55 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         preferredSize: Size.fromHeight(0),
       ),
-      body: ListView.builder(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          Todo todo = await Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => TodoWritePage(
+                  todo: Todo(
+                      title: "",
+                      color: 0,
+                      memo: "",
+                      done: 0,
+                      category: "",
+                      date: Utils.getFormatTime(DateTime.now())))));
+          getTodayTodo();
+        },
+        tooltip: 'Increment',
+        child: const Icon(Icons.add),
+      ),
+      body: getPage(),
+      bottomNavigationBar: BottomNavigationBar(
+        items: [
+          BottomNavigationBarItem(
+              icon: Icon(Icons.today_outlined), label: "오늘"),
+          BottomNavigationBarItem(icon: Icon(Icons.assignment), label: "기록"),
+          BottomNavigationBarItem(icon: Icon(Icons.more_horiz), label: "더보기")
+        ],
+        currentIndex: selectIndex,
+        onTap: (idx) {
+          if (idx == 1) {
+            getAllTodo();
+          }
+          setState(() {
+            selectIndex = idx;
+          });
+        },
+      ),
+    );
+  }
+
+  Widget getPage() {
+    if (selectIndex == 0) {
+      return getMain();
+    } else {
+      return getHistory();
+    }
+  }
+
+  List<Todo> allTodo = [];
+
+  Widget getMain() {
+    return ListView.builder(
         itemCount: 4,
         itemBuilder: (ctx, idx) {
           if (idx == 0) {
@@ -140,29 +153,25 @@ class _MyHomePageState extends State<MyHomePage> {
             return Container(
                 child: Column(
                     children: List.generate(undone.length, (_index) {
-                      Todo t = undone[_index];
-                      String done = "";
-                      if (t.done == 0) {
-                        done == "미완료";
-                      }
-                      return InkWell(
-                        child: TodoCardWidget(t: t),
-                        onLongPress: () async {
-                          getTodayTodo();
-                        },
-                        onTap: () async{
-                          setState(() {
-                            if (t.done == 0) {
-                              t.done = 1;
-                            } else {
-                              t.done = 0;
-                            }
-                          }
-                          );
-                          await dbHelper.insertTodo(t);
-                        },
-                      );
-                    })));
+              Todo t = undone[_index];
+
+              return InkWell(
+                child: TodoCardWidget(t: t),
+                onLongPress: () async {
+                  getTodayTodo();
+                },
+                onTap: () async {
+                  setState(() {
+                    if (t.done == 0) {
+                      t.done = 1;
+                    } else {
+                      t.done = 0;
+                    }
+                  });
+                  await dbHelper.insertTodo(t);
+                },
+              );
+            })));
           } else if (idx == 2) {
             return Container(
               child: Text(
@@ -173,78 +182,39 @@ class _MyHomePageState extends State<MyHomePage> {
             );
           } else if (idx == 3) {
             List<Todo> done =
-            todos.where((element) => element.done == 1).toList();
+                todos.where((element) => element.done == 1).toList();
 
             return Container(
                 child: Column(
-                  children: List.generate(done.length, (_index) {
-                    Todo t = done[_index];
-                    return InkWell(
-                      child: TodoCardWidget(t: t),
-                      onLongPress: () async {
-                        Todo todo = await Navigator.of(context).push(
-                            MaterialPageRoute(
-                                builder: (context) => TodoWritePage(todo: t)));
-                        setState(() {});
-                      },
-                      onTap: () async{
-                        setState(() {
-                          if (t.done == 0) {
-                            t.done = 1;
-                          } else {
-                            t.done = 0;
-                          }
-                        });
-                        await dbHelper.insertTodo(t);
-                      },
-                    );
-                  }),
-                ));
+              children: List.generate(done.length, (_index) {
+                Todo t = done[_index];
+                return InkWell(
+                  child: TodoCardWidget(t: t),
+                  onLongPress: () async {
+                    Todo todo = await Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (context) => TodoWritePage(todo: t)));
+                    setState(() {});
+                  },
+                  onTap: () async {
+                    setState(() {
+                      if (t.done == 0) {
+                        t.done = 1;
+                      } else {
+                        t.done = 0;
+                      }
+                    });
+                    await dbHelper.insertTodo(t);
+                  },
+                );
+              }),
+            ));
           }
           return Container();
-        },
-
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-      ),
-
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          Todo todo = await Navigator.of(context).push(MaterialPageRoute(
-              builder: (context) => TodoWritePage(
-                  todo: Todo(
-                      title: "",
-                      color: 0,
-                      memo: "",
-                      done: 0,
-                      category: "",
-                      date: Utils.getFormatTime(DateTime.now())))));
-          getTodayTodo();
-        },
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
-      bottomNavigationBar: BottomNavigationBar(
-        items: [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.today_outlined), label: "오늘"),
-          BottomNavigationBarItem(icon: Icon(Icons.assignment), label: "기록"),
-          BottomNavigationBarItem(icon: Icon(Icons.more_horiz), label: "더보기")
-        ],
-        onTap: (index) {
-          setState(() {
-            if (_idx==1){
-              getAllTodo();
-            }
-            _idx = index;
-          });
-        },
-        currentIndex: _idx,
-      ),
-    );
+        });
   }
-  List<Todo> allTodo = [];
-  Widget getHistory(){
+
+  Widget getHistory() {
     return ListView.builder(
       itemCount: allTodo.length,
       itemBuilder: (context, index) {
@@ -261,6 +231,9 @@ class TodoCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    int now = Utils.getFormatTime(DateTime.now());
+    DateTime time = Utils.numToDateTime(t.date);
+
     return Container(
         decoration: BoxDecoration(
           color: Color(t.color),
@@ -290,9 +263,12 @@ class TodoCardWidget extends StatelessWidget {
             Container(
               height: 8,
             ),
-            Text(t.memo.toString()),
+            Text(t.memo),
+            Text(
+              now == t.date ? "" : "${time.month}월 ${time.day}일",
+              style: TextStyle(color: Colors.white),
+            )
           ],
         ));
   }
 }
-
